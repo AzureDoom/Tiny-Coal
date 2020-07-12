@@ -1,0 +1,10 @@
+modLoader="javafml"
+loaderVersion="[32,)"
+[[mods]] 
+modId="tinycoal"
+version="${file.jarVersion}" 
+displayName="Tiny Coal"
+authors="AzureDoomC" 
+description='''
+Allows you to convert coal or charcoal to Tiny Coal/Charcoal.
+'''
