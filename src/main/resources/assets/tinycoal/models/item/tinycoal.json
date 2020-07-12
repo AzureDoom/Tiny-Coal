@@ -1,6 +1,6 @@
 {
    "parent": "item/generated",
    "textures": {
-       "layer0": "tinycoal:items/tinycoal"
+       "layer0": "tinycoal:items/tiny_coal"
    }
 }
