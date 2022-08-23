@@ -1,29 +1,33 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
-        maven { url  = 'https://plugins.gradle.org/m2/' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+	maven { url  = 'https://plugins.gradle.org/m2/' }
         jcenter()
         mavenCentral()
+        gradlePluginPortal()
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-		classpath "com.wynprice.cursemaven:CurseMaven:2.1.5"
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
         classpath 'gradle.plugin.com.matthewprenger:CurseGradle:1.4.0'
+        classpath "com.modrinth.minotaur:Minotaur:2.1.2"
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-apply plugin: "com.wynprice.cursemaven"
+apply plugin: 'java'
 apply plugin: 'com.matthewprenger.cursegradle'
+apply plugin: "com.modrinth.minotaur"
 
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
 
 version = "1.0.0"
 group = "mod.azure.tinycoal"
-archivesBaseName = "Tiny-Coal-1.16.4"
+archivesBaseName = "Tiny-Coal-1.18.2"
 
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 minecraft {
@@ -32,8 +36,6 @@ minecraft {
     runs {
         client {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
             mods {
                 tinycoal {
                     source sourceSets.main
@@ -42,8 +44,6 @@ minecraft {
         }
         server {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
             mods {
                 tinycoal {
                     source sourceSets.main
@@ -52,8 +52,6 @@ minecraft {
         }
         data {
             workingDirectory project.file('run')
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-            property 'forge.logging.console.level', 'debug'
             args '--mod', 'tinycoal', '--all', '--output', file('src/generated/resources/')
             mods {
                 tinycoal {
@@ -80,8 +78,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.4-35.0.1'
-	compile fg.deobf("curse.maven:JEI:3078092")
+    minecraft 'net.minecraftforge:forge:1.18.2-40.1.19'
 }
 
 jar {
@@ -99,19 +96,6 @@ jar {
 }
 
 jar.finalizedBy('reobfJar') 
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
-        }
-    }
-    repositories {
-        maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
-        }
-    }
-}
 
 processResources {
 	doLast {
@@ -141,9 +125,25 @@ curseforge {
         releaseType = "release"
         changelogType = 'text'
         changelog = file('CHANGELOG.txt')
-        addGameVersion("1.16.3")
-        addGameVersion("1.16.4")
+        addGameVersion("1.18.2")
         addGameVersion("Forge")
         addGameVersion("Java 8")
     }
+}
+
+if (file('key.properties').exists()) {
+	modrinth {
+		def modrinthProp = new Properties()
+		File secretPropsFile = file("key.properties")
+		modrinthProp.load(secretPropsFile.newInputStream())
+		
+		token = modrinthProp.getProperty('modrinthKey')
+		projectId = 'TODO' 
+		versionNumber = project.mod_version 
+		versionName = 'Forge 1.18.2'
+		uploadFile = jar 
+		changelog = rootProject.file("changelog.txt").text
+		gameVersions = ['1.18.2']
+		loaders = ['forge']
+	}
 }
