@@ -8,4 +8,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'tiny-coal-forge-1.18'
+rootProject.name = 'tiny-coal-forge-1.19'
