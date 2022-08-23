@@ -1,1 +1,0 @@
-cmd /k gradlew.bat curseforge modrinth -Dorg.gradle.java.home="C:\Program Files\Java\jdk-17.0.1"
