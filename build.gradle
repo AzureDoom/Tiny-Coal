@@ -1,11 +1,10 @@
 buildscript {
     repositories {
-        maven { url = 'https://maven.minecraftforge.net/' }
-	maven { url  = 'https://plugins.gradle.org/m2/' }
+        maven { url = "https://maven.minecraftforge.net/" }
+		maven { url = "https://plugins.gradle.org/m2/" }
         jcenter()
         mavenCentral()
         gradlePluginPortal()
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
@@ -18,21 +17,30 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 apply plugin: 'java'
 apply plugin: 'com.matthewprenger.cursegradle'
+apply from: "https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle"
 apply plugin: "com.modrinth.minotaur"
-
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
-
-version = "1.0.0"
-group = "mod.azure.tinycoal"
-archivesBaseName = "Tiny-Coal-1.18.2"
+import com.modrinth.minotaur.dependencies.ModDependency
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
+
+
+repositories {
+	maven { url 'https://www.cursemaven.com' }
+}
+
+configurations {
+    library
+    shade
+    implementation.extendsFrom library
+    shade.extendsFrom library
+}
 
 minecraft {
-    mappings channel: 'snapshot', version: '20201028-1.16.3'
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    mappings channel: 'official', version: '1.18.2'
     runs {
         client {
             workingDirectory project.file('run')
@@ -52,7 +60,7 @@ minecraft {
         }
         data {
             workingDirectory project.file('run')
-            args '--mod', 'tinycoal', '--all', '--output', file('src/generated/resources/')
+            args '--mod', 'tinycoal', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
             mods {
                 tinycoal {
                     source sourceSets.main
@@ -62,72 +70,69 @@ minecraft {
     }
 }
 
-repositories {
-	jcenter()
-	maven {
-        name = "jitpack"
-        url "https://jitpack.io"
-    }
-    maven {
-        url 'https://www.dogforce-games.com/maven/'
-    }
-    maven {
-        name = "CurseForge"
-        url = "https://minecraft.curseforge.com/api/maven/"
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+minecraft.runs.all {
+    lazyToken('minecraft_classpath') {
+        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
     }
 }
 
 dependencies {
     minecraft 'net.minecraftforge:forge:1.18.2-40.1.19'
+  	compileOnly "org.apache.logging.log4j:log4j-core:2.17.+"
+  	compileOnly 'org.jetbrains:annotations:22.+'
 }
 
 jar {
     manifest {
         attributes([
-            "Specification-Title": "tinycoal",
-            "Specification-Vendor": "tinycoalsareus",
-            "Specification-Version": "1", // We are version 1 of ourselves
-            "Implementation-Title": project.name,
-            "Implementation-Version": "${version}",
-            "Implementation-Vendor" :"tinycoalsareus",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Specification-Title"     : "Log Begone",
+                "Specification-Vendor"    : "AzureDoom",
+                "Specification-Version"   : "1", // We are version 1 of ourselves
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : "${version}",
+                "Implementation-Vendor"   : "AzureDoom",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
 }
 
-jar.finalizedBy('reobfJar') 
+jar.finalizedBy('reobfJar')
 
-processResources {
-	doLast {
-        def jsonMinifyStart = System.currentTimeMillis()
-        def jsonMinified = 0
-        def jsonBytesSaved = 0
-        fileTree(dir: outputs.files.asPath, include: '**/*.json').each { 
-            File file = it
-            jsonMinified++
-            def oldLength = file.length()
-            file.text = JsonOutput.toJson(new JsonSlurper().parse(file))
-            jsonBytesSaved += oldLength - file.length()
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
         }
-        println('Minified ' + jsonMinified + ' json files. Saved ' + jsonBytesSaved + ' bytes. Took ' + (System.currentTimeMillis() - jsonMinifyStart) + 'ms.')
+    }
+    repositories {
+        maven {
+            url "file:///${project.projectDir}/mcmodsrepo"
+        }
     }
 }
 
-curseforge {
-
-    def curseProp = new Properties()
-    File secretPropsFile = file("key.properties")
-    curseProp.load(secretPropsFile.newInputStream())
-
-    project {
-        apiKey = curseProp.getProperty('curseKey')
-        id = "395272"
-        releaseType = "release"
-        changelogType = 'text'
-        changelog = file('CHANGELOG.txt')
-        addGameVersion("1.18.2")
-        addGameVersion("Forge")
-        addGameVersion("Java 8")
+if (file('key.properties').exists()) {
+    curseforge {
+    	def curseProp = new Properties()
+    	File secretPropsFile = file("key.properties")
+    	curseProp.load(secretPropsFile.newInputStream())
+    	project {
+        	apiKey = curseProp.getProperty('curseKey')
+        	id = "395272"
+        	releaseType = "release"
+        	changelogType = 'text'
+        	changelog = file('CHANGELOG.txt')
+			addGameVersion("1.18.2")
+			addGameVersion("1.18.1")
+			addGameVersion("1.18")
+			addGameVersion("Forge")
+			addGameVersion("Java 17")
+    	}
+    	options {
+        	forgeGradleIntegration = false
+    	}
     }
 }
 
@@ -138,7 +143,7 @@ if (file('key.properties').exists()) {
 		modrinthProp.load(secretPropsFile.newInputStream())
 		
 		token = modrinthProp.getProperty('modrinthKey')
-		projectId = 'TODO' 
+		projectId = '6Ezzuwck' 
 		versionNumber = project.mod_version 
 		versionName = 'Forge 1.18.2'
 		uploadFile = jar 
