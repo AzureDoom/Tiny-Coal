@@ -5,6 +5,7 @@ license="MIT"
 modId="tinycoal"
 version="${file.jarVersion}" 
 displayName="Tiny Coal"
+logoFile="icon.png"
 authors="AzureDoomC" 
 description='''
 Allows you to convert coal or charcoal to Tiny Coal/Charcoal.

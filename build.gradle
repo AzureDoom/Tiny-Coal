@@ -44,6 +44,7 @@ minecraft {
     runs {
         client {
             workingDirectory project.file('run')
+            taskName 'tinycoalforge1.18_client'
             mods {
                 tinycoal {
                     source sourceSets.main
@@ -52,15 +53,7 @@ minecraft {
         }
         server {
             workingDirectory project.file('run')
-            mods {
-                tinycoal {
-                    source sourceSets.main
-                }
-            }
-        }
-        data {
-            workingDirectory project.file('run')
-            args '--mod', 'tinycoal', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            taskName 'tinycoalforge1.18_server'
             mods {
                 tinycoal {
                     source sourceSets.main
