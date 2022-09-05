@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "tinycoal",
+	"version": "${version}",
+	"name": "Tiny Coal",
+	"description": "Allows you to convert coal or charcoal to Tiny Coal/Charcoal.",
+	"authors": [
+		"AzureDoom"
+	],
+	"contact": {
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/tiny-coal",
+		"sources": "https://github.com/AzureDoom/Tiny-Coal",
+		"issues": "https://github.com/AzureDoom/Tiny-Coal/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/tinycoal/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"mod.azure.tinycoal.TinyCoalMod"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.14.2",
+		"fabric": "*",
+		"minecraft": "1.18.x",
+		"java": ">=17"
+	}
+}

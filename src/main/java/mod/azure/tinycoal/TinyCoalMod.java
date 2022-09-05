@@ -1,26 +1,23 @@
 package mod.azure.tinycoal;
 
-import mod.azure.tinycoal.item.TinyCoalItem;
-import net.minecraft.world.item.Item;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.registry.FuelRegistry;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
-@Mod("tinycoal")
-public class TinyCoalMod {
+public class TinyCoalMod implements ModInitializer {
 
 	public static final String MODID = "tinycoal";
-	public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
-	public static final RegistryObject<Item> TINY_COAL = ITEMS.register("tinycoal", () -> new TinyCoalItem());
-	public static final RegistryObject<Item> TINY_CHARCOAL = ITEMS.register("tinycharcoal", () -> new TinyCoalItem());
+	public static final Item TINY_COAL = new Item(new Item.Settings().group(ItemGroup.MATERIALS));
+	public static final Item TINY_CHARCOAL = new Item(new Item.Settings().group(ItemGroup.MATERIALS));
 
-	public TinyCoalMod() {
-		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-		MinecraftForge.EVENT_BUS.register(this);
-		ITEMS.register(modEventBus);
+	@Override
+	public void onInitialize() {
+		Registry.register(Registry.ITEM, new Identifier(MODID, "tinycoal"), TINY_COAL);
+		Registry.register(Registry.ITEM, new Identifier(MODID, "tinycharcoal"), TINY_CHARCOAL);
+		FuelRegistry.INSTANCE.add(TINY_COAL, 200);
+		FuelRegistry.INSTANCE.add(TINY_CHARCOAL, 200);
 	}
 }
