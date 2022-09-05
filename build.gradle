@@ -1,115 +1,73 @@
 buildscript {
     repositories {
-        maven { url = "https://maven.minecraftforge.net/" }
-		maven { url = "https://plugins.gradle.org/m2/" }
-        jcenter()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'gradle.plugin.com.matthewprenger:CurseGradle:1.4.0'
-        classpath "com.modrinth.minotaur:Minotaur:2.+"
+    	maven { url  = 'https://plugins.gradle.org/m2/' }
     }
 }
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-apply plugin: 'java'
-apply plugin: 'com.matthewprenger.cursegradle'
-apply from: "https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle"
-apply plugin: "com.modrinth.minotaur"
+
+plugins {
+    id 'fabric-loom' version '0.11-SNAPSHOT'
+	id 'maven-publish'
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
+    id "com.modrinth.minotaur" version "2.+"
+}
+
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
 import com.modrinth.minotaur.dependencies.ModDependency
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 archivesBaseName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
 
-
 repositories {
-	maven { url 'https://www.cursemaven.com' }
-}
-
-configurations {
-    library
-    shade
-    implementation.extendsFrom library
-    shade.extendsFrom library
-}
-
-minecraft {
-    mappings channel: 'official', version: '1.18.2'
-    runs {
-        client {
-            workingDirectory project.file('run')
-            mods {
-                tinycoal {
-                    source sourceSets.main
-                }
-            }
-        }
-        server {
-            workingDirectory project.file('run')
-            mods {
-                tinycoal {
-                    source sourceSets.main
-                }
-            }
-        }
-        data {
-            workingDirectory project.file('run')
-            args '--mod', 'tinycoal', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-            mods {
-                tinycoal {
-                    source sourceSets.main
-                }
-            }
-        }
-    }
-}
-
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
-minecraft.runs.all {
-    lazyToken('minecraft_classpath') {
-        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-    }
+    maven { url 'https://www.cursemaven.com' }
+    maven { url  = 'https://plugins.gradle.org/m2/' }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.19'
-  	compileOnly "org.apache.logging.log4j:log4j-core:2.17.+"
-  	compileOnly 'org.jetbrains:annotations:22.+'
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 17
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = "sources"
+	from sourceSets.main.allSource
 }
 
 jar {
-    manifest {
-        attributes([
-                "Specification-Title"     : "Log Begone",
-                "Specification-Vendor"    : "AzureDoom",
-                "Specification-Version"   : "1", // We are version 1 of ourselves
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : "${version}",
-                "Implementation-Vendor"   : "AzureDoom",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
-    }
+	from "LICENSE"
 }
 
-jar.finalizedBy('reobfJar')
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
+processResources {
+	doLast {
+        def jsonMinifyStart = System.currentTimeMillis()
+        def jsonMinified = 0
+        def jsonBytesSaved = 0
+        fileTree(dir: outputs.files.asPath, include: '**/*.json').each { 
+            File file = it
+            jsonMinified++
+            def oldLength = file.length()
+            file.text = JsonOutput.toJson(new JsonSlurper().parse(file))
+            jsonBytesSaved += oldLength - file.length()
         }
-    }
-    repositories {
-        maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
-        }
+        println('Minified ' + jsonMinified + ' json files. Saved ' + jsonBytesSaved + ' bytes. Took ' + (System.currentTimeMillis() - jsonMinifyStart) + 'ms.')
     }
 }
 
@@ -125,8 +83,16 @@ if (file('key.properties').exists()) {
         	changelogType = 'text'
         	changelog = file('CHANGELOG.txt')
 			addGameVersion("1.18.2")
-			addGameVersion("Forge")
+			addGameVersion("Fabric")
 			addGameVersion("Java 17")
+        	relations {
+            	requiredDependency 'fabric-api'  
+        	}
+        	mainArtifact(remapJar)
+
+        	afterEvaluate {
+            	uploadTask.dependsOn("remapJar")
+        	}
     	}
     	options {
         	forgeGradleIntegration = false
@@ -143,10 +109,10 @@ if (file('key.properties').exists()) {
 		token = modrinthProp.getProperty('modrinthKey')
 		projectId = '6Ezzuwck' 
 		versionNumber = project.mod_version 
-		versionName = 'Forge 1.18.2'
-		uploadFile = jar 
+		versionName = 'Fabric/Quilt 1.18.2'
+		uploadFile = remapJar 
 		changelog = rootProject.file("changelog.txt").text
 		gameVersions = ['1.18.2']
-		loaders = ['forge']
+		loaders = ['fabric', 'quilt']
 	}
 }
