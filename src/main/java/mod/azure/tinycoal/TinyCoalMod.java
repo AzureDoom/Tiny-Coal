@@ -19,8 +19,8 @@ public class TinyCoalMod implements ModInitializer {
 	public void onInitialize() {
 		Registry.register(Registries.ITEM, new Identifier(MODID, "tinycoal"), TINY_COAL);
 		Registry.register(Registries.ITEM, new Identifier(MODID, "tinycharcoal"), TINY_CHARCOAL);
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.NATURAL).register(entries -> entries.add(TINY_COAL));
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.NATURAL).register(entries -> entries.add(TINY_CHARCOAL));
+		ItemGroupEvents.modifyEntriesEvent(ItemGroups.INGREDIENTS).register(entries -> entries.add(TINY_COAL));
+		ItemGroupEvents.modifyEntriesEvent(ItemGroups.INGREDIENTS).register(entries -> entries.add(TINY_CHARCOAL));
 		FuelRegistry.INSTANCE.add(TINY_COAL, 200);
 		FuelRegistry.INSTANCE.add(TINY_CHARCOAL, 200);
 	}
