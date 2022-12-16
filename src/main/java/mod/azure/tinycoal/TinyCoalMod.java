@@ -28,6 +28,9 @@ public class TinyCoalMod {
 	}
 
 	public void addCreativeTabs(final CreativeModeTabEvent.BuildContents event) {
-		event.registerSimple(CreativeModeTabs.INGREDIENTS, TINY_COAL.get(), TINY_CHARCOAL.get());
+		if (event.getTab() == CreativeModeTabs.INGREDIENTS) {
+			event.accept(TINY_COAL.get());
+			event.accept(TINY_CHARCOAL.get());
+		}
 	}
 }
